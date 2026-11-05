@@ -152,6 +152,39 @@ RUN \
     cp /etc/skel/.bashrc /root/.bashrc ; \
   fi
 
+RUN \
+    echo "================================================= OS ==================================================="; \
+    cat /etc/fedora-release; \
+    echo "========== INSTALLED PACKAGES =========="; \
+    rpm -qa | sort | grep -Ei 'gcc|glibc|sysroot|cross-gcc|binutils'; \
+    echo "========== CROSS GCC CONFIG =========="; \
+    x86_64-linux-gnu-gcc -v 2>&1; \
+    echo "========== CROSS GCC SYSROOT =========="; \
+    x86_64-linux-gnu-gcc -print-sysroot; \
+    echo "========== CROSS GCC SEARCH DIRS =========="; \
+    x86_64-linux-gnu-gcc -print-search-dirs; \
+    echo "========== CROSS GCC INCLUDE PATHS =========="; \
+    x86_64-linux-gnu-gcc -E -v -x c /dev/null 2>&1; \
+    echo "========== CROSS GCC C++ FRONTEND =========="; \
+    x86_64-linux-gnu-gcc -print-prog-name=cc1plus; \
+    Uecho "========== CROSS GCC C++ FRONTEND FILE =========="; \
+    find /usr/libexec/gcc /usr/lib/gcc -name cc1plus -print 2>/dev/null; \
+    echo "========== SYSROOT HEADERS =========="; \
+    find /usr/x86_64-linux-gnu -name stdio.h -o -name features.h 2>/dev/null; \
+    echo "========== NATIVE HEADERS =========="; \
+    ls -l /usr/include/stdio.h /usr/include/features.h 2>&1; \
+    echo "========== NATIVE GCC =========="; \
+    gcc -dumpmachine; \
+    gcc -print-sysroot; \
+    echo "========== CROSS GCC C TEST =========="; \
+    printf '#include <stdio.h>\nint main(void) { return 0; }\n' > /tmp/test.c; \
+    x86_64-linux-gnu-gcc -fsyntax-only /tmp/test.c 2>&1; \
+    echo "========== CROSS GCC C++ TEST =========="; \
+    printf '#include <cstdio>\nint main() { return 0; }\n' > /tmp/test.cpp; \
+    x86_64-linux-gnu-gcc -fsyntax-only /tmp/test.cpp 2>&1; \
+    echo "========== END =========="; \
+    sleep 100
+
 # Set the entry point
 COPY fedora45_dev_entrypoint.sh /usr/libexec/entrypoint
 ENTRYPOINT ["/usr/libexec/entrypoint"]
